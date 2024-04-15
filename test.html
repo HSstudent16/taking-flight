@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Test | HTML</title>
+  </head>
+  <body>
+    <canvas id = "cnv">
+
+    </canvas>
+    <script type = "module">
+      import {Vector} from "./js/vector.js";
+
+      /** @type {HTMLCanvasElement} */
+      let cnv = document.getElementById("cnv"),
+          ctx = cnv.getContext('2d');
+
+      cnv.width = 800;
+      cnv.height = 500;
+
+      let mouseX = 0, mouseY = 0;
+
+      window.onmousemove = evt => {
+        mouseX = evt.clientX;
+        mouseY = evt.clientY;
+      };
+
+      let pos = new Vector(300, 300);
+      let lerpos = new Vector(300, 300);
+
+      let vel = new Vector(0, 0);
+      let acc = new Vector(0, 0);
+
+      let mouse = new Vector(0, 0);
+      let friction = 0.3;
+
+      let lastTime = performance.now();
+
+      let cameraIdx = 0;
+
+      window.onclick = evt => {
+        cameraIdx ++;
+        cameraIdx %= 3;
+      }
+
+      function loop () {
+        let dt = (performance.now() - lastTime) / 1000;
+
+        let camera = [lerpos, pos, mouse][cameraIdx];
+
+        mouse.set(mouseX, mouseY);
+
+        acc.set(0, 0);
+        acc.add(mouse);
+        acc.sub(pos);
+        acc.sub(Vector.mult(vel, 0.25));
+        acc.div(0.125);
+        acc.add(Vector.mult(vel, friction-1));
+
+        vel.add(Vector.mult(acc, dt));
+
+        lerpos.set(Vector.add(lerpos, Vector.mult(Vector.sub(pos, lerpos), 2 * dt)));
+        pos.add(Vector.mult(vel, dt));
+
+        ctx.clearRect(0, 0, 800, 600);
+
+        ctx.fillStyle = "grey";
+        ctx.fillRect(650 - camera.x, 450 - camera.y, 300, 300)
+
+        ctx.fillStyle = "red";
+        ctx.beginPath();
+        ctx.ellipse(400 + pos.x - camera.x, 250 + pos.y - camera.y, 10, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "yellow";
+        ctx.beginPath();
+        ctx.ellipse(400 + lerpos.x - camera.x, 250 + lerpos.y - camera.y, 10, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "green";
+        ctx.beginPath();
+        ctx.ellipse(400 + mouse.x - camera.x, 250 + mouse.y - camera.y, 10, 10, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillText(dt, 20, 20);
+
+        lastTime = performance.now();
+
+        requestAnimationFrame(loop);
+      }
+
+      ctx.fillStyle = "red";
+      loop();
+      </script>
+  </body>
+</html>
